@@ -27,6 +27,21 @@ socket.on('connected', (ws: SocketInterface) => {
     })
 });
 ```
+### TypeScript client example
+
+```ts
+import { SocketFsClient } from "./socketfs_client";
+
+const socket = new SocketFsClient("ws://localhost:8080")
+socket.on("connected", () => {
+    console.log("Connected")
+    socket.emit("hi", "OKK!")
+})
+socket.on("ping", (data: any) => console.log(data))
+
+
+socket.connect()
+```
 ### Python client example
 
 ```py
