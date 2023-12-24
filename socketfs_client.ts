@@ -89,7 +89,7 @@ export class SocketFsClient {
      * @returns Stringified JSON
      */
 
-    stringifySendData(eventName: string, data: any): string {
+    private stringifySendData(eventName: string, data: any): string {
         return JSON.stringify({ name: eventName, data })
     }
 }
