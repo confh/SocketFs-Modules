@@ -63,3 +63,26 @@ if __name__ == "__main__":
         print(data)
     ws.run()
 ```
+### C# client example
+```cs
+using Newtonsoft.Json.Linq;
+using System;
+using System.Threading.Tasks;
+namespace SocketFs
+{
+    class Program
+    {
+        static async Task Main(string[] args)
+        {
+            SocketFs sf = new SocketFs("ws://localhost:8080");
+            sf.debug = true;
+            sf.on("connected", (data) =>
+            {
+                Console.WriteLine("Connected!!");
+                sf.emit("hi", new JObject { { "eventName", "s" } });
+            });
+            await sf.connectAndRun();
+        }
+    }
+}
+```
