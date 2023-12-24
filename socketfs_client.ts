@@ -1,4 +1,4 @@
-import { client as WebsocketClient, connection } from "websocket";
+import WebSocket = require("ws");
 
 interface EventHandler {
     eventName: string,
@@ -11,10 +11,9 @@ interface MessageData {
 }
 
 export class SocketFsClient {
-    private ws = new WebsocketClient()
+    private ws: WebSocket
     private url: string
     private eventHandlers: EventHandler[] = []
-    private connection: connection
 
     constructor(url: string) {
         this.url = url
@@ -24,34 +23,23 @@ export class SocketFsClient {
      * Connect to the socket server
      */
     async connect() {
-        await this.ws.connect(this.url)
-        this.ws.removeAllListeners()
-        this.ws.on("connect", connection => {
-            this.emitEvent("connected")
-
-            connection.on("close", () => {
-                setTimeout(() => {
-                    this.connect()
-                }, 1000);
-            })
-
-            connection.on("error", () => {
-                connection.close()
-            })
-
-            connection.on("message", (message) => {
-                if (message.type === 'utf8') {
-                    const data = JSON.parse(message.utf8Data) as MessageData
-                    console.log(data)
-                    this.emitEvent(data.eventName, data.data)
-                }
-
-            })
-            this.connection = connection
+        this.ws = new WebSocket(this.url)
+        this.ws.on("error", () => {
+            this.ws.close()
         })
-        this.ws.on("connectFailed", () => setTimeout(() => {
-            this.connect()
-        }, 1000))
+        this.ws.on("close", () => {
+            setTimeout(() => {
+                this.connect()
+            }, 1000);
+        })
+        this.ws.on("open", () => {
+            this.emitEvent("connected")
+        })
+        this.ws.on("message", (message) => {
+            const data = JSON.parse(message.toString()) as MessageData
+            console.log(data)
+            this.emitEvent(data.eventName, data.data)
+        })
     }
 
     /**
@@ -79,7 +67,7 @@ export class SocketFsClient {
      * @param data Data
      */
     emit(eventName: string, data: any) {
-        this.connection.send(this.stringifySendData(eventName, data))
+        this.ws.send(this.stringifySendData(eventName, data))
     }
 
     /**
@@ -90,6 +78,6 @@ export class SocketFsClient {
      */
 
     private stringifySendData(eventName: string, data: any): string {
-        return JSON.stringify({ name: eventName, data })
+        return JSON.stringify({ eventName: eventName, data })
     }
 }
