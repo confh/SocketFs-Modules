@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from "ws";
 
 export interface SocketInterface {
     on: Function,
@@ -17,7 +17,7 @@ interface socketData {
 }
 
 export class SocketFs {
-    private ws: WebSocket.Server
+    private ws: WebSocketServer
     private eventHandlers: eventCallback[] = []
     private socketEventHandlers: eventCallback[] = []
     public clients: Set<WebSocket>
@@ -26,8 +26,11 @@ export class SocketFs {
      * Run the socket server
      * @param port Port to connect to
      */
-    connect(port = 8080) {
-        this.ws = new WebSocket.Server({ port });
+    connect(port = 3000, server: any = null, noServer: boolean = false) {
+        this.ws = new WebSocketServer({
+            server,
+            noServer
+        });
         this.ws.on("connection", (ws: SocketInterface) => {
             ws.id = this.getUniqueID()
             this.clients = this.ws.clients
@@ -42,10 +45,16 @@ export class SocketFs {
                 }
             })
             this.emit("connected", ws)
-        })
-        this.ws.on("close", (ws: SocketInterface) => {
-            this.clients = this.ws.clients
-            this.emit("disconnected", ws)
+            ws.on("close", () => {
+                this.clients = this.ws.clients
+                for (let i = 0; i < this.socketEventHandlers.length; i++) {
+                    const event = this.socketEventHandlers[i]
+                    if (event.eventName === "disconnected") {
+                        event.callback()
+                        break
+                    }
+                }
+            })
         })
     }
 
@@ -72,7 +81,7 @@ export class SocketFs {
      * @param eventName Name of the event
      * @param args Arguments to send data with
      */
-    broadcast(eventName: string, data: any) {
+    broadcast(eventName: string, data: any = null) {
         this.ws.clients.forEach((client: any) => {
             if (client !== this.ws && client.readyState === WebSocket.OPEN) {
                 client.send(this.stringifySendData(eventName, data))
@@ -88,7 +97,7 @@ export class SocketFs {
      */
 
     stringifySendData(eventName: string, data: any): string {
-        return JSON.stringify({ name: eventName, data })
+        return JSON.stringify({ eventName: eventName, data })
     }
 
     private getUniqueID = function () {
