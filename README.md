@@ -6,11 +6,10 @@ Easy-to-use-socket
 ### TypeScript server example
 
 ```ts
-import path from "path"
 import { SocketFs, SocketInterface } from "./socketfs_server"
 
 const socket = new SocketFs()
-socket.connect(3000, false, true)
+socket.connect()
 
 socket.on('connected', (ws: SocketInterface) => {
     console.log('New client connected');
@@ -23,21 +22,8 @@ socket.on('connected', (ws: SocketInterface) => {
         socket.broadcast("test", `Server received your message: ${d}`)
     })
 
-    socket.onSocketEvent(ws, "hi", (d: string) => {
-        console.log(d)
-    })
-
-    socket.onSocketEvent(ws, "ass", (d: string) => {
-        console.log(d)
-    })
-
-    socket.onSocketEvent(ws, "chat_message", (msg: string) => {
-        console.log('message: ' + msg);
-        socket.broadcast("chat_message", msg)
-    })
-
-    socket.onSocketEvent(ws, "disconnected", () => {
-        console.log("disconnected")
+    ws.on('close', () => {
+        console.log('Client disconnected');
     })
 });
 ```
@@ -98,5 +84,41 @@ namespace SocketFs
             await sf.connectAndRun();
         }
     }
+}
+```
+### Java client example
+```java
+package com.socket.fs;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+public class Main {
+    public static void main(String[] args) throws URISyntaxException, InterruptedException {
+        SocketFs client = new SocketFs(new URI("ws://localhost:3000"));
+        client.on("ping", (Object data) -> {
+            println("Message recieved is: " + data.toString());
+        });
+        client.on("connected", (data) -> {
+            println("Connected!");
+        });
+        client.connect();
+        while (true) {
+            if (!client.isOpen()) {
+                try {
+                    client.reconnect();
+                } catch (Exception e) {
+                    client = new SocketFs(new URI("ws://localhost:3000"));
+                    client.connect();
+                }
+            }
+            Thread.sleep(1000);
+        }
+    }
+
+    public static void println(String data) {
+        System.out.println(data);
+    }
+
 }
 ```
