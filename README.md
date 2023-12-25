@@ -6,10 +6,11 @@ Easy-to-use-socket
 ### TypeScript server example
 
 ```ts
+import path from "path"
 import { SocketFs, SocketInterface } from "./socketfs_server"
 
 const socket = new SocketFs()
-socket.connect()
+socket.connect(3000, false, true)
 
 socket.on('connected', (ws: SocketInterface) => {
     console.log('New client connected');
@@ -22,8 +23,21 @@ socket.on('connected', (ws: SocketInterface) => {
         socket.broadcast("test", `Server received your message: ${d}`)
     })
 
-    ws.on('close', () => {
-        console.log('Client disconnected');
+    socket.onSocketEvent(ws, "hi", (d: string) => {
+        console.log(d)
+    })
+
+    socket.onSocketEvent(ws, "ass", (d: string) => {
+        console.log(d)
+    })
+
+    socket.onSocketEvent(ws, "chat_message", (msg: string) => {
+        console.log('message: ' + msg);
+        socket.broadcast("chat_message", msg)
+    })
+
+    socket.onSocketEvent(ws, "disconnected", () => {
+        console.log("disconnected")
     })
 });
 ```
