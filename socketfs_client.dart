@@ -21,8 +21,6 @@ class EmitData {
       };
 }
 
-void showToast(String msg) {
-
 class SocketFs {
   late WebSocket socket;
   late Uri uri;
@@ -45,9 +43,7 @@ class SocketFs {
   }
 
   connect() async {
-    showToast("Connecting");
     await WebSocket.connect(uri.origin).then((value) => socket = value);
-    showToast("Connected");
     socket.listen((message) {
       final data = jsonDecode(message.toString());
       _emit_event(data['eventName'], data['data']);
